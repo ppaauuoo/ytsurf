@@ -110,25 +110,38 @@ fetch_feed() {
 process_channel() {
   IFS=',' read -r title channel <<<"$1"
   title=$(xargs <<<"$title")
-  channel=$(xargs <<<"$channel" | jq -nr --arg str "$channel" '$str|@uri')
+  channel=$(xargs <<<"$channel")
   curl -s --compressed --http1.1 --keepalive-time 30 \
-    "https://www.youtube.com/$channel/videos" |
-    sed -n 's/.*var ytInitialData = \(.*\);<\/script>.*/\1/p' |
+    "https://www.youtube.com/$channel/videos?hl=en" |
+    perl -0777 -ne 'print $1 if /var ytInitialData = (.*?);<\/script>/s' |
     jq --arg author "$title" '
       .contents.twoColumnBrowseResultsRenderer.tabs[1]
       .tabRenderer.content.richGridRenderer.contents
-      | map(.richItemRenderer.content.videoRenderer?)
-      | map(select(.videoId and .title.runs[0].text))
-      | map({
-          id: .videoId,
-          title: .title.runs[0].text,
-          duration: .lengthText.simpleText,
-          views: .shortViewCountText.simpleText,
-          author: $author,
-          published: .publishedTimeText.simpleText,
-          thumbnail: .thumbnail.thumbnails[0].url
-      })
-  ' 2>/dev/null
+      | map(.richItemRenderer.content)
+      | map(
+          if .videoRenderer then {
+            id: .videoRenderer.videoId,
+            title: .videoRenderer.title.runs[0].text,
+            duration: .videoRenderer.lengthText.simpleText,
+            views: .videoRenderer.shortViewCountText.simpleText,
+            author: $author,
+            published: .videoRenderer.publishedTimeText.simpleText,
+            thumbnail: .videoRenderer.thumbnail.thumbnails[0].url
+          }
+          elif .lockupViewModel and .lockupViewModel.contentType == "LOCKUP_CONTENT_TYPE_VIDEO" then {
+            id: .lockupViewModel.contentId,
+            title: .lockupViewModel.metadata.lockupMetadataViewModel.title.content,
+            duration: (.lockupViewModel.contentImage.thumbnailViewModel.overlays[0].thumbnailBottomOverlayViewModel.badges[0].thumbnailBadgeViewModel.text // ""),
+            views: (.lockupViewModel.metadata.lockupMetadataViewModel.metadata.contentMetadataViewModel.metadataRows[0].metadataParts[0].text.content // ""),
+            author: $author,
+            published: (.lockupViewModel.metadata.lockupMetadataViewModel.metadata.contentMetadataViewModel.metadataRows[0].metadataParts[1].text.content // ""),
+            thumbnail: (.lockupViewModel.contentImage.thumbnailViewModel.image.sources[-1].url // "")
+          }
+          else null
+          end
+        )
+      | map(select(. != null and .id != null and .title != null))
+    ' 2>/dev/null
 }
 export -f process_channel
 
@@ -402,7 +415,7 @@ configuration() {
   mkdir -p "$CACHE_DIR" "$CONFIG_DIR" "$PLAYLIST_DIR"
 
   [ -f "$SUB_FILE" ] || echo "[]" >"$SUB_FILE"
-  rm "$QUEUE_FILE" && echo "[]" >"$QUEUE_FILE"
+  rm -f "$QUEUE_FILE"; echo "[]" >"$QUEUE_FILE"
 
   # shellcheck source=/home/stan/.config/ytsurf/config
 
