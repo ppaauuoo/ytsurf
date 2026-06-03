@@ -94,7 +94,7 @@ fetch_feed() {
   if [[ -f "$cacheFeed" ]] && jq -e 'length != 0' "$cacheFeed" && (($(date +%s) - $(stat -c "%Y" "$cacheFeed") < 1800)); then
     json_data=$(cat "$cacheFeed")
   else
-    mapfile -t subs < <(jq -r '.[] | "\(.title),\(.channelName)"' "$SUB_FILE" | tr -d $'')
+    mapfile -t subs < <(jq -r '.[] | "\(.title),\(.channelName)"' "$SUB_FILE" | tr -d '\r')
     json_data=$(printf "%s\n" "${subs[@]}" |
       shuf |
       head -n 5 |
@@ -639,7 +639,7 @@ manage_subscriptions() {
     elif [[ "$use_sentaku" == true ]]; then
       chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
     fi
 
     if [[ "$chosen_action" == "Sync_Subscriptions" ]]; then
@@ -676,7 +676,7 @@ sync_subs() {
   elif [[ "$use_sentaku" == true ]]; then
     chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
   else
-    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
   fi
 
   if [[ "$chosen_action" == "Yes" ]]; then
@@ -697,7 +697,7 @@ sync_subs() {
     elif [[ "$use_sentaku" == true ]]; then
       chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
     fi
     if json_data=$(yt-dlp --cookies-from-browser "$chosen_action" --flat-playlist https://www.youtube.com/feed/channels -J); then
       echo "$json_data" | jq -r '.entries
@@ -731,7 +731,7 @@ subscribe() {
   jsonData=$(search_channel)
   export jsonData TMPDIR
   menuList=()
-  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d $'')
+  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d '\r')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries_channel
@@ -758,7 +758,7 @@ subscribe() {
     previewScript=$(create_preview_script_fzf_channel)
     selected_item=$(printf "%s\n" "${menuList[@]}" | fzf \
       --prompt="search channel" \
-      --preview="bash -c '$previewScript' -- {n}" | tr -d $'')
+      --preview="bash -c '$previewScript' -- {n}" | tr -d '\r')
   fi
   [ -n "$selected_item" ] || {
     send_notification "Error" "No selection made."
@@ -812,7 +812,7 @@ unsubscribe() {
 
   export jsonData TMPDIR
   menuList=()
-  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d $'')
+  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d '\r')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries_channel
@@ -839,7 +839,7 @@ unsubscribe() {
     previewScript=$(create_preview_script_fzf_channel)
     selected_item=$(printf "%s\n" "${menuList[@]}" | fzf \
       --prompt="search channel" \
-      --preview="bash -c '$previewScript' -- {n}" | tr -d $'')
+      --preview="bash -c '$previewScript' -- {n}" | tr -d '\r')
   fi
   [ -n "$selected_item" ] || {
     send_notification "Error" "No selection made."
@@ -893,7 +893,7 @@ select_action() {
         --input-header="$header" \
         --no-status-bar)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
     fi
 
     if [[ "$chosen_action" == "watch" ]]; then
@@ -961,7 +961,7 @@ select_format() {
       --input-header="$header" \
       --no-status-bar)
   else
-    chosen_res=$(printf "%s\n" "${format_options[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+    chosen_res=$(printf "%s\n" "${format_options[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
   fi
 
   # Process selection
@@ -1035,8 +1035,8 @@ process_queue() {
   fi
   local video_id_list=()
   local video_title_list=()
-  mapfile -t video_id_list < <(jq -r '.[].id' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
-  mapfile -t video_title_list < <(jq -r '.[].title' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+  mapfile -t video_id_list < <(jq -r '.[].id' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
+  mapfile -t video_title_list < <(jq -r '.[].title' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
   if [[ ${#video_id_list[@]} -eq 0 ]]; then
     send_notification "Error" "Queue is empty or corrupted."
     exit 1
@@ -1055,11 +1055,11 @@ process_queue() {
     video_view_list=()
     video_published_list=()
     video_thumbnail_list=()
-    mapfile -t video_duration_list < <(jq -r '.[].duration' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
-    mapfile -t video_author_list < <(jq -r '.[].author' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
-    mapfile -t video_view_list < <(jq -r '.[].views' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
-    mapfile -t video_published_list < <(jq -r '.[].published' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
-    mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+    mapfile -t video_duration_list < <(jq -r '.[].duration' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
+    mapfile -t video_author_list < <(jq -r '.[].author' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
+    mapfile -t video_view_list < <(jq -r '.[].views' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
+    mapfile -t video_published_list < <(jq -r '.[].published' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
+    mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "$QUEUE_FILE" 2>/dev/null | tr -d '\r')
 
     for ((i = ${#video_id_list[@]} - 1; i >= 0; i--)); do
       add_to_history "${video_id_list[$i]}" "${video_title_list[$i]}" "${video_duration_list[$i]}" "${video_author_list[$i]}" "${video_view_list[$i]}" "${video_published_list[$i]}" "${video_thumbnail_list[$i]}"
@@ -1116,7 +1116,7 @@ handle_playlist() {
       --input-header="$header" \
       --no-status-bar)
   else
-    name=$(printf "%s\n" "${names[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+    name=$(printf "%s\n" "${names[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
   fi
 
   [[ -z "$name" ]] && {
@@ -1139,13 +1139,13 @@ handle_playlist() {
   video_view_list=()
   video_published_list=()
   video_thumbnail_list=()
-  mapfile -t video_duration_list < <(jq -r '.[].duration' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_author_list < <(jq -r '.[].author' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_view_list < <(jq -r '.[].views' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_published_list < <(jq -r '.[].published' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_id_list < <(jq -r '.[].id' "${playlists[$index]}" 2>/dev/null | tr -d $'')
-  mapfile -t video_title_list < <(jq -r '.[].title' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_duration_list < <(jq -r '.[].duration' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_author_list < <(jq -r '.[].author' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_view_list < <(jq -r '.[].views' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_published_list < <(jq -r '.[].published' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_id_list < <(jq -r '.[].id' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
+  mapfile -t video_title_list < <(jq -r '.[].title' "${playlists[$index]}" 2>/dev/null | tr -d '\r')
 
   for ((i = ${#video_id_list[@]} - 1; i >= 0; i--)); do
     add_to_history "${video_id_list[$i]}" "${video_title_list[$i]}" "${video_duration_list[$i]}" "${video_author_list[$i]}" "${video_view_list[$i]}" "${video_published_list[$i]}" "${video_thumbnail_list[$i]}"
@@ -1324,8 +1324,8 @@ handle_history() {
   local history_titles=()
   local history_ids=()
 
-  mapfile -t history_ids < <(echo "$json_data" | jq -r '.[].id' 2>/dev/null | tr -d $'')
-  mapfile -t history_titles < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d $'')
+  mapfile -t history_ids < <(echo "$json_data" | jq -r '.[].id' 2>/dev/null | tr -d '\r')
+  mapfile -t history_titles < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d '\r')
 
   if [[ ${#history_titles[@]} -eq 0 ]]; then
     send_notification "Error" "History is empty or corrupted."
@@ -1611,7 +1611,7 @@ select_from_menu() {
 
     selected_item=$(printf "%s\n" "${menu_items[@]}" | fzf \
       --prompt="$prompt" \
-      --preview="bash -c '$preview_script' -- {n}" | tr -d $'')
+      --preview="bash -c '$preview_script' -- {n}" | tr -d '\r')
   fi
   echo "$selected_item"
 }
@@ -1634,7 +1634,7 @@ handle_selection() {
   }
 
   local menu_list=()
-  mapfile -t menu_list < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d $'')
+  mapfile -t menu_list < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d '\r')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries "$json_data"
@@ -1703,7 +1703,7 @@ handle_selection() {
         --input-header="$header" \
         --no-status-bar)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
     fi
     if [[ "$chosen_action" == "Add_To_Queue" ]]; then
       STATE="SEARCH"
@@ -1744,7 +1744,7 @@ select_init() {
       --input-header="$header" \
       --no-status-bar)
   else
-    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
+    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d '\r')
   fi
 
   if [[ "$chosen_action" == "Manage_subscriptions" ]]; then
