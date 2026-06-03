@@ -91,19 +91,22 @@ TMPDIR=""
 #=============================================================================
 fetch_feed() {
   cacheFeed="$CACHE_DIR/feed.json"
-  if [[ -f "$cacheFeed" ]] && jq -e 'length != 0' "$cacheFeed" && (($(date +%s) - $(stat -c "%Y" "$cacheFeed") < 1800)); then
-    json_data=$(cat "$cacheFeed")
+  local cacheKey="$cacheFeed.$limit"
+  if [[ -f "$cacheKey" ]] && jq -e 'length != 0' "$cacheKey" 2>/dev/null && (($(date +%s) - $(stat -c "%Y" "$cacheKey") < 1800)); then
+    json_data=$(cat "$cacheKey")
   else
-    mapfile -t subs < <(jq -r '.[] | "\(.title),\(.channelName)"' "$SUB_FILE" | tr -d '\r')
+    # Sample enough channels to fill the requested limit (~3 videos each)
+    local channels_needed=$(( (limit / 3) + 3 ))
+    mapfile -t subs < <(jq -r '.[] | select(.channelName != null) | "\(.title),\(.channelName)"' "$SUB_FILE" | tr -d '\r')
     json_data=$(printf "%s\n" "${subs[@]}" |
       shuf |
-      head -n 5 |
+      head -n "$channels_needed" |
       xargs -P 6 -I{} bash -c 'process_channel "$@"' _ {} 2>/dev/null |
       jq -c '.[]' |
       shuf |
       head -n "$limit" |
       jq -s '.')
-    echo "$json_data" >"$cacheFeed"
+    echo "$json_data" >"$cacheKey"
   fi
 }
 
