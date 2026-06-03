@@ -639,7 +639,7 @@ manage_subscriptions() {
     elif [[ "$use_sentaku" == true ]]; then
       chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
     fi
 
     if [[ "$chosen_action" == "Sync_Subscriptions" ]]; then
@@ -676,7 +676,7 @@ sync_subs() {
   elif [[ "$use_sentaku" == true ]]; then
     chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
   else
-    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
   fi
 
   if [[ "$chosen_action" == "Yes" ]]; then
@@ -697,7 +697,7 @@ sync_subs() {
     elif [[ "$use_sentaku" == true ]]; then
       chosen_action=$(printf "%s\n" "${items[@]}" | sentaku)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
     fi
     if json_data=$(yt-dlp --cookies-from-browser "$chosen_action" --flat-playlist https://www.youtube.com/feed/channels -J); then
       echo "$json_data" | jq -r '.entries
@@ -758,7 +758,7 @@ subscribe() {
     previewScript=$(create_preview_script_fzf_channel)
     selected_item=$(printf "%s\n" "${menuList[@]}" | fzf \
       --prompt="search channel" \
-      --preview="bash -c '$previewScript' -- {n}")
+      --preview="bash -c '$previewScript' -- {n}" | tr -d $'')
   fi
   [ -n "$selected_item" ] || {
     send_notification "Error" "No selection made."
@@ -839,7 +839,7 @@ unsubscribe() {
     previewScript=$(create_preview_script_fzf_channel)
     selected_item=$(printf "%s\n" "${menuList[@]}" | fzf \
       --prompt="search channel" \
-      --preview="bash -c '$previewScript' -- {n}")
+      --preview="bash -c '$previewScript' -- {n}" | tr -d $'')
   fi
   [ -n "$selected_item" ] || {
     send_notification "Error" "No selection made."
@@ -893,7 +893,7 @@ select_action() {
         --input-header="$header" \
         --no-status-bar)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
     fi
 
     if [[ "$chosen_action" == "watch" ]]; then
@@ -961,7 +961,7 @@ select_format() {
       --input-header="$header" \
       --no-status-bar)
   else
-    chosen_res=$(printf "%s\n" "${format_options[@]}" | fzf --prompt="$prompt" --header="$header")
+    chosen_res=$(printf "%s\n" "${format_options[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
   fi
 
   # Process selection
@@ -1116,7 +1116,7 @@ handle_playlist() {
       --input-header="$header" \
       --no-status-bar)
   else
-    name=$(printf "%s\n" "${names[@]}" | fzf --prompt="$prompt" --header="$header")
+    name=$(printf "%s\n" "${names[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
   fi
 
   [[ -z "$name" ]] && {
@@ -1611,7 +1611,7 @@ select_from_menu() {
 
     selected_item=$(printf "%s\n" "${menu_items[@]}" | fzf \
       --prompt="$prompt" \
-      --preview="bash -c '$preview_script' -- {n}")
+      --preview="bash -c '$preview_script' -- {n}" | tr -d $'')
   fi
   echo "$selected_item"
 }
@@ -1703,7 +1703,7 @@ handle_selection() {
         --input-header="$header" \
         --no-status-bar)
     else
-      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+      chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
     fi
     if [[ "$chosen_action" == "Add_To_Queue" ]]; then
       STATE="SEARCH"
@@ -1744,7 +1744,7 @@ select_init() {
       --input-header="$header" \
       --no-status-bar)
   else
-    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header")
+    chosen_action=$(printf "%s\n" "${items[@]}" | fzf --prompt="$prompt" --header="$header" | tr -d $'')
   fi
 
   if [[ "$chosen_action" == "Manage_subscriptions" ]]; then
