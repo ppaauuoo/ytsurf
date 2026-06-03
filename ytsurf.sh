@@ -94,7 +94,7 @@ fetch_feed() {
   if [[ -f "$cacheFeed" ]] && jq -e 'length != 0' "$cacheFeed" && (($(date +%s) - $(stat -c "%Y" "$cacheFeed") < 1800)); then
     json_data=$(cat "$cacheFeed")
   else
-    mapfile -t subs < <(jq -r '.[] | "\(.title),\(.channelName)"' "$SUB_FILE")
+    mapfile -t subs < <(jq -r '.[] | "\(.title),\(.channelName)"' "$SUB_FILE" | tr -d $'')
     json_data=$(printf "%s\n" "${subs[@]}" |
       shuf |
       head -n 5 |
@@ -731,7 +731,7 @@ subscribe() {
   jsonData=$(search_channel)
   export jsonData TMPDIR
   menuList=()
-  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null)
+  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d $'')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries_channel
@@ -812,7 +812,7 @@ unsubscribe() {
 
   export jsonData TMPDIR
   menuList=()
-  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null)
+  mapfile -t menuList < <(echo "$jsonData" | jq -r '.[].title' 2>/dev/null | tr -d $'')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries_channel
@@ -1035,8 +1035,8 @@ process_queue() {
   fi
   local video_id_list=()
   local video_title_list=()
-  mapfile -t video_id_list < <(jq -r '.[].id' "$QUEUE_FILE" 2>/dev/null)
-  mapfile -t video_title_list < <(jq -r '.[].title' "$QUEUE_FILE" 2>/dev/null)
+  mapfile -t video_id_list < <(jq -r '.[].id' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+  mapfile -t video_title_list < <(jq -r '.[].title' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
   if [[ ${#video_id_list[@]} -eq 0 ]]; then
     send_notification "Error" "Queue is empty or corrupted."
     exit 1
@@ -1055,11 +1055,11 @@ process_queue() {
     video_view_list=()
     video_published_list=()
     video_thumbnail_list=()
-    mapfile -t video_duration_list < <(jq -r '.[].duration' "$QUEUE_FILE" 2>/dev/null)
-    mapfile -t video_author_list < <(jq -r '.[].author' "$QUEUE_FILE" 2>/dev/null)
-    mapfile -t video_view_list < <(jq -r '.[].views' "$QUEUE_FILE" 2>/dev/null)
-    mapfile -t video_published_list < <(jq -r '.[].published' "$QUEUE_FILE" 2>/dev/null)
-    mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "$QUEUE_FILE" 2>/dev/null)
+    mapfile -t video_duration_list < <(jq -r '.[].duration' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+    mapfile -t video_author_list < <(jq -r '.[].author' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+    mapfile -t video_view_list < <(jq -r '.[].views' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+    mapfile -t video_published_list < <(jq -r '.[].published' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
+    mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "$QUEUE_FILE" 2>/dev/null | tr -d $'')
 
     for ((i = ${#video_id_list[@]} - 1; i >= 0; i--)); do
       add_to_history "${video_id_list[$i]}" "${video_title_list[$i]}" "${video_duration_list[$i]}" "${video_author_list[$i]}" "${video_view_list[$i]}" "${video_published_list[$i]}" "${video_thumbnail_list[$i]}"
@@ -1139,13 +1139,13 @@ handle_playlist() {
   video_view_list=()
   video_published_list=()
   video_thumbnail_list=()
-  mapfile -t video_duration_list < <(jq -r '.[].duration' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_author_list < <(jq -r '.[].author' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_view_list < <(jq -r '.[].views' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_published_list < <(jq -r '.[].published' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_id_list < <(jq -r '.[].id' "${playlists[$index]}" 2>/dev/null)
-  mapfile -t video_title_list < <(jq -r '.[].title' "${playlists[$index]}" 2>/dev/null)
+  mapfile -t video_duration_list < <(jq -r '.[].duration' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_author_list < <(jq -r '.[].author' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_view_list < <(jq -r '.[].views' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_published_list < <(jq -r '.[].published' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_thumbnail_list < <(jq -r '.[].thumbnails' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_id_list < <(jq -r '.[].id' "${playlists[$index]}" 2>/dev/null | tr -d $'')
+  mapfile -t video_title_list < <(jq -r '.[].title' "${playlists[$index]}" 2>/dev/null | tr -d $'')
 
   for ((i = ${#video_id_list[@]} - 1; i >= 0; i--)); do
     add_to_history "${video_id_list[$i]}" "${video_title_list[$i]}" "${video_duration_list[$i]}" "${video_author_list[$i]}" "${video_view_list[$i]}" "${video_published_list[$i]}" "${video_thumbnail_list[$i]}"
@@ -1324,8 +1324,8 @@ handle_history() {
   local history_titles=()
   local history_ids=()
 
-  mapfile -t history_ids < <(echo "$json_data" | jq -r '.[].id' 2>/dev/null)
-  mapfile -t history_titles < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null)
+  mapfile -t history_ids < <(echo "$json_data" | jq -r '.[].id' 2>/dev/null | tr -d $'')
+  mapfile -t history_titles < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d $'')
 
   if [[ ${#history_titles[@]} -eq 0 ]]; then
     send_notification "Error" "History is empty or corrupted."
@@ -1634,7 +1634,7 @@ handle_selection() {
   }
 
   local menu_list=()
-  mapfile -t menu_list < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null)
+  mapfile -t menu_list < <(echo "$json_data" | jq -r '.[].title' 2>/dev/null | tr -d $'')
 
   if [[ "$use_rofi" == true ]]; then
     create_desktop_entries "$json_data"
