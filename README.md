@@ -71,8 +71,11 @@ Install-Module -Name BurntToast -Scope CurrentUser
 
 ```bash
 mkdir -p ~/bin
-curl -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
+curl -fsSL -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
 chmod +x ~/bin/ytsurf
+
+# Scoop installs mpv without a shim — create one so Git Bash can find it
+ln -sf "$(cygpath -u "$(scoop prefix mpv)")/mpv.exe" ~/bin/mpv
 ```
 
 No PATH changes needed — Git Bash automatically includes `~/bin`. Restart Git Bash, then run `ytsurf`.
