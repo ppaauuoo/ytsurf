@@ -43,7 +43,11 @@ readonly CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/$SCRIPT_NAME"
 readonly PLAYLIST_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/$SCRIPT_NAME/playlists"
 readonly CONFIG_FILE="$CONFIG_DIR/config"
 readonly SUB_FILE="$CONFIG_DIR/sub.json"
-readonly YTSURF_SOCKET="${TMPDIR:-/tmp}/ytsurf-mpv-$$.sock"
+if [[ "$OS" == "Windows_NT" ]]; then
+  readonly YTSURF_SOCKET="//./pipe/ytsurf-mpv-$$"
+else
+  readonly YTSURF_SOCKET="${TMPDIR:-/tmp}/ytsurf-mpv-$$.sock"
+fi
 readonly QUEUE_FILE="$HOME/.cache/$SCRIPT_NAME/queue.json"
 
 #=============================================================================
@@ -158,7 +162,8 @@ search_channel() {
   fi
 }
 
-command -v notify-send >/dev/null 2>&1 && notify=true || notify=false # check if notify-send is installed
+command -v notify-send >/dev/null 2>&1 && notify=true || notify=false
+[[ "$OS" == "Windows_NT" ]] && notify=true # use BurntToast on Windows; silently skips if not installed
 # Send notications
 send_notification() {
   if [ "$use_rofi" = false ]; then
@@ -167,8 +172,15 @@ send_notification() {
   fi
   timeout=5000
   if [ "$notify" = true ]; then
-    [ -z "${3:-}" ] && notify-send "$1" "$2" -t "$timeout"
-    [ -n "${3:-}" ] && notify-send "$1" "$2" -t "$timeout" -i "$3"
+    if [[ "$OS" == "Windows_NT" ]]; then
+      local _title="$1" _body="${2:-}"
+      powershell.exe -NoProfile -NonInteractive -Command \
+        "Import-Module BurntToast -ErrorAction SilentlyContinue; New-BurntToastNotification -Text '$_title','$_body'" \
+        2>/dev/null || true
+    else
+      [ -z "${3:-}" ] && notify-send "$1" "$2" -t "$timeout"
+      [ -n "${3:-}" ] && notify-send "$1" "$2" -t "$timeout" -i "$3"
+    fi
   fi
 }
 
@@ -195,6 +207,7 @@ clip() {
 }
 
 create_desktop_entries_channel() {
+  [[ "$OS" == "Windows_NT" ]] && return 0 # .desktop entries not supported on Windows
 
   mkdir -p "$TMPDIR/applications"
   mkdir -p "$applications"
@@ -259,7 +272,10 @@ EOF
         [[ "$chafa_block_mode" == true ]] && {
           chafa --size="${img_w}x${img_h}" --symbols block "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
         }
-         [[ "$chafa_block_mode" == true ]] || { 
+        [[ "$chafa_block_mode" == false && "$OS" == "Windows_NT" ]] && {
+          chafa --format symbols --size="${img_w}x${img_h}" "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
+        }
+        [[ "$chafa_block_mode" == false && "$OS" != "Windows_NT" ]] && {
           chafa --size="${img_w}x${img_h}" "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
         }
     else
@@ -270,6 +286,7 @@ EOF
 }
 
 create_desktop_entries() {
+  [[ "$OS" == "Windows_NT" ]] && return 0 # .desktop entries not supported on Windows
   local json_data="$1"
 
   mkdir -p "$TMPDIR/applications"
@@ -468,6 +485,10 @@ parse_arguments() {
       exit 0
       ;;
     --rofi)
+      if [[ "$OS" == "Windows_NT" ]]; then
+        echo "Error: --rofi is not supported on Windows (rofi requires X11)." >&2
+        exit 1
+      fi
       use_rofi=true
       shift
       ;;
@@ -1508,12 +1529,16 @@ EOF
         img_h=$(( img_h < 10 ? 10 : img_h ))
         img_w=$(( img_w < 20 ? 20 : img_w ))
 
-         [[ "$chafa_block_mode" == true ]] && {
+        [[ "$chafa_block_mode" == true ]] && {
           chafa --size="${img_w}x${img_h}" --symbols block "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
         }
-         [[ "$chafa_block_mode" == true ]] || { 
+        [[ "$chafa_block_mode" == false && "$OS" == "Windows_NT" ]] && {
+          chafa --format symbols --size="${img_w}x${img_h}" "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
+        }
+        [[ "$chafa_block_mode" == false && "$OS" != "Windows_NT" ]] && {
           chafa --size="${img_w}x${img_h}" "$img_path" 2>/dev/null || echo "(failed to render thumbnail)"
-        }    else
+        }
+    else
         echo "(chafa not available - no thumbnail preview)"
     fi
     echo

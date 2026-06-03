@@ -41,7 +41,37 @@ jobs:
         # We expect this to fail, so we invert the exit code with !
         ! ./ytsurf.sh --limit "not-a-number"
 
-  test-macos:
+  test-windows:
+    name: Test (windows-latest)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies via Scoop
+      shell: powershell
+      run: |
+        Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+        irm get.scoop.sh | iex
+        scoop install main/shellcheck main/jq main/fzf main/curl
+
+    - name: Add Scoop to PATH
+      shell: powershell
+      run: echo "$env:USERPROFILE\scoop\shims" >> $env:GITHUB_PATH
+
+    - name: Lint with ShellCheck
+      run: shellcheck ytsurf.sh
+
+    - name: Run Sanity Checks
+      run: |
+        ./ytsurf.sh -V
+        ! ./ytsurf.sh --limit "not-a-number"
+        ! ./ytsurf.sh --rofi
+
     name: Test (macos-latest)
     runs-on: macos-latest
 
