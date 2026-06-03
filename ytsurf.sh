@@ -103,9 +103,20 @@ fetch_feed() {
       head -n "$channels_needed" |
       xargs -P 6 -I{} bash -c 'process_channel "$@"' _ {} 2>/dev/null |
       jq -c '.[]' |
-      shuf |
-      head -n "$limit" |
-      jq -s '.')
+      jq -s --argjson limit "$limit" '
+        def to_secs:
+          if . == null or . == "" then 999999999
+          elif test("second") then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end)
+          elif test("minute") then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 60
+          elif test("hour")   then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 3600
+          elif test("day")    then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 86400
+          elif test("week")   then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 604800
+          elif test("month")  then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 2592000
+          elif test("year")   then (gsub("[^0-9]+";"") | if . == "" then 1 else tonumber end) * 31536000
+          else 999999999
+          end;
+        sort_by(.published | to_secs) | .[:$limit]
+      ')
     echo "$json_data" >"$cacheKey"
   fi
 }
