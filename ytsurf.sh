@@ -114,6 +114,7 @@ process_channel() {
   curl -s --compressed --http1.1 --keepalive-time 30 \
     "https://www.youtube.com/$channel/videos?hl=en" |
     perl -0777 -ne 'print $1 if /var ytInitialData = (.*?);<\/script>/s' |
+    perl -pe 's/[\x00-\x08\x0b\x0c\x0e-\x1f]//g' |
     jq --arg author "$title" '
       .contents.twoColumnBrowseResultsRenderer.tabs[1]
       .tabRenderer.content.richGridRenderer.contents
@@ -156,7 +157,8 @@ search_channel() {
     encodedQuery=$(jq -rn --arg q "$query" '$q|@uri')
     jsonData=$(
       curl -s --compressed --http1.1 --keepalive-time 30 "https://www.youtube.com/results?search_query=${encodedQuery}&sp=EgIQAg%3D%3D&hl=en&gl=US" |
-        sed -n 's/.*var ytInitialData = \(.*\);<\/script>.*/\1/p' |
+        perl -0777 -ne 'print $1 if /var ytInitialData = (.*?);<\/script>/s' |
+        perl -pe 's/[\x00-\x08\x0b\x0c\x0e-\x1f]//g' |
         jq -r '.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents[0].itemSectionRenderer.contents
       | map(.channelRenderer)
       | map({
@@ -1419,7 +1421,8 @@ fetch_search_results() {
   encoded_query=$(printf '%s' "$query" | jq -sRr @uri)
 
   response=$(curl -s --compressed --http1.1 --keepalive-time 30 "https://www.youtube.com/results?search_query=${encoded_query}&sp=EgIQAQ%253D%253D&hl=en&gl=US" |
-    perl -0777 -ne 'print $1 if /var ytInitialData = (.*?);\s*<\/script>/s')
+    perl -0777 -ne 'print $1 if /var ytInitialData = (.*?);\s*<\/script>/s' |
+    perl -pe 's/[\x00-\x08\x0b\x0c\x0e-\x1f]//g')
 
   json_data=$(echo "$response" |
     jq -r --argjson limit "$limit" "
