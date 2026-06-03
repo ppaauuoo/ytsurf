@@ -41,7 +41,62 @@ YouTube in your terminal. Clean and distraction-free.
 
 ## Installation
 
+### Windows (Git Bash / MSYS2)
+
+ytsurf runs on Windows via **Git Bash** (bundled with [Git for Windows](https://gitforwindows.org/)) or **MSYS2**. **Windows Terminal** is strongly recommended for correct thumbnail preview rendering.
+
+**1. Install dependencies — run in PowerShell:**
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+irm get.scoop.sh | iex
+
+scoop install main/yt-dlp main/jq main/curl main/fzf main/mpv main/ffmpeg
+```
+
+For thumbnail previews (optional):
+
+```powershell
+scoop bucket add extras
+scoop install extras/chafa
+```
+
+For desktop toast notifications (optional):
+
+```powershell
+Install-Module -Name BurntToast -Scope CurrentUser
+```
+
+**2. Install ytsurf — run in Git Bash:**
+
+```bash
+mkdir -p ~/bin
+curl -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
+chmod +x ~/bin/ytsurf
+```
+
+No PATH changes needed — Git Bash automatically includes `~/bin`. Restart Git Bash, then run `ytsurf`.
+
+**Windows notes:**
+- Config and data live in `~/.config/ytsurf/` → `C:\Users\<you>\.config\ytsurf\`
+- `--rofi` is not supported on Windows (rofi requires X11)
+- Thumbnail previews automatically use Unicode symbols mode; sixel mode is unavailable in Windows Terminal
+- `perl` is bundled with Git for Windows — no separate install needed
+- Run inside **Windows Terminal** for best results; standalone mintty may have fzf preview colour issues
+
+### Linux / macOS (curl)
+
+```bash
+mkdir -p ~/bin
+curl -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
+chmod +x ~/bin/ytsurf
+```
+
+`~/bin` is usually in PATH already. If not, add `export PATH="$HOME/bin:$PATH"` to your `~/.bashrc` or `~/.zshrc`.
+
 ### Arch Linux (AUR)
+
+> Installs the upstream release — does not include Windows support.
 
 ```bash
 yay -S ytsurf
@@ -51,6 +106,8 @@ paru -S ytsurf
 
 ### Homebrew
 
+> Installs the upstream release — does not include Windows support.
+
 ```bash
 brew tap stan-breaks/ytsurf https://github.com/stan-breaks/ytsurf
 brew install stan-breaks/ytsurf/ytsurf
@@ -58,7 +115,9 @@ brew install stan-breaks/ytsurf/ytsurf
 
 ### NixOS (system-wide, flakes)
 
-In your `flake.nix` (system config):
+> Installs the upstream release — does not include Windows support.
+
+In your `flake.nix`:
 
 ```nix
 {
@@ -88,59 +147,6 @@ In your `flake.nix` (system config):
   };
 }
 ```
-
-### Windows (Git Bash / MSYS2)
-
-ytsurf runs on Windows via **Git Bash** (bundled with [Git for Windows](https://gitforwindows.org/)) or **MSYS2**. **Windows Terminal** is strongly recommended for correct thumbnail preview rendering.
-
-**1. Install dependencies via [Scoop](https://scoop.sh) (run in PowerShell):**
-
-```powershell
-Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-irm get.scoop.sh | iex
-
-scoop install main/yt-dlp main/jq main/curl main/fzf main/mpv main/ffmpeg
-```
-
-For thumbnail previews, install **chafa** from the extras bucket:
-
-```powershell
-scoop bucket add extras
-scoop install extras/chafa
-```
-
-For optional desktop toast notifications, install [BurntToast](https://github.com/windos/burnttoast):
-
-```powershell
-Install-Module -Name BurntToast -Scope CurrentUser
-```
-
-**2. Install ytsurf (run in Git Bash):**
-
-```bash
-mkdir -p ~/bin
-curl -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
-chmod +x ~/bin/ytsurf
-```
-
-No PATH changes needed — Git Bash automatically includes `~/bin` via its default `.bash_profile`. Restart Git Bash after installing.
-
-**Windows notes:**
-- Config and data live in `~/.config/ytsurf/` → `C:\Users\<you>\.config\ytsurf\`
-- `--rofi` is not supported on Windows (rofi requires X11)
-- Thumbnail previews automatically use Unicode symbols mode; sixel mode is unavailable in Windows Terminal
-- `perl` is bundled with Git for Windows — no separate install needed
-- Run inside **Windows Terminal** for best results; standalone mintty may have fzf preview colour issues
-
-### Manual Installation
-
-```bash
-mkdir -p ~/bin
-curl -o ~/bin/ytsurf https://raw.githubusercontent.com/ppaauuoo/ytsurf/main/ytsurf.sh
-chmod +x ~/bin/ytsurf
-```
-
-Git Bash automatically includes `~/bin` in PATH. On Linux/macOS, add `~/bin` to your PATH if it isn't already.
 
 
 ## Dependencies
